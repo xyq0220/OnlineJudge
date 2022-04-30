@@ -94,3 +94,16 @@ class Problem(models.Model):
     def add_ac_number(self):
         self.accepted_number = models.F("accepted_number") + 1
         self.save(update_fields=["accepted_number"])
+
+class ProblemTagShip(models.Model):
+    problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
+    tag = models.ForeignKey(ProblemTag, on_delete=models.CASCADE)
+    tagged_number = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = "problem_tag_relation"
+
+    def add_tagged_number(self):
+        self.tagged_number = models.F("tagged_number") + 1
+        self.save(update_fields=["tagged_number"])
+    
