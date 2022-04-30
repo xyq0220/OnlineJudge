@@ -21,7 +21,7 @@ from utils.api import APIView, CSRFExemptAPIView, validate_serializer, APIError
 from utils.constants import Difficulty
 from utils.shortcuts import rand_str, natural_sort_key
 from utils.tasks import delete_files
-from ..models import Problem, ProblemRuleType, ProblemTag
+from ..models import Problem, ProblemRuleType, ProblemTag, ProblemTagShip
 from ..serializers import (CreateContestProblemSerializer, CompileSPJSerializer,
                            CreateProblemSerializer, EditProblemSerializer, EditContestProblemSerializer,
                            ProblemAdminSerializer, TestCaseUploadForm, ContestProblemMakePublicSerializer,
@@ -221,7 +221,8 @@ class ProblemAPI(ProblemBase):
                 tag = ProblemTag.objects.get(name=item)
             except ProblemTag.DoesNotExist:
                 tag = ProblemTag.objects.create(name=item)
-            problem.tags.add(tag)
+            problem_tag_ship, _ = ProblemTagShip.objects.get_or_create(problem=problem,tag=tag)
+            problem_tag_ship.add_tagged_number()
         return self.success(ProblemAdminSerializer(problem).data)
 
     @problem_permission_required
@@ -286,7 +287,8 @@ class ProblemAPI(ProblemBase):
                 tag = ProblemTag.objects.get(name=tag)
             except ProblemTag.DoesNotExist:
                 tag = ProblemTag.objects.create(name=tag)
-            problem.tags.add(tag)
+            problem_tag_ship, _ = ProblemTagShip.objects.get_or_create(problem=problem,tag=tag)
+            problem_tag_ship.add_tagged_number()
 
         return self.success()
 
@@ -342,7 +344,8 @@ class ContestProblemAPI(ProblemBase):
                 tag = ProblemTag.objects.get(name=item)
             except ProblemTag.DoesNotExist:
                 tag = ProblemTag.objects.create(name=item)
-            problem.tags.add(tag)
+            problem_tag_ship, _ = ProblemTagShip.objects.get_or_create(problem=problem,tag=tag)
+            problem_tag_ship.add_tagged_number()
         return self.success(ProblemAdminSerializer(problem).data)
 
     def get(self, request):
@@ -416,7 +419,8 @@ class ContestProblemAPI(ProblemBase):
                 tag = ProblemTag.objects.get(name=tag)
             except ProblemTag.DoesNotExist:
                 tag = ProblemTag.objects.create(name=tag)
-            problem.tags.add(tag)
+            problem_tag_ship, _ = ProblemTagShip.objects.get_or_create(problem=problem,tag=tag)
+            problem_tag_ship.add_tagged_number()
         return self.success()
 
     def delete(self, request):
@@ -621,7 +625,8 @@ class ImportProblemAPI(CSRFExemptAPIView, TestCaseZipProcessor):
                                                              )
                         for tag_name in problem_info["tags"]:
                             tag_obj, _ = ProblemTag.objects.get_or_create(name=tag_name)
-                            problem_obj.tags.add(tag_obj)
+                            problem_tag_ship, _ = ProblemTagShip.objects.get_or_create(problem=problem_obj,tag=tag_obj)
+                            problem_tag_ship.add_tagged_number()                      
         return self.success({"import_count": count})
 
 

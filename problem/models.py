@@ -13,6 +13,9 @@ class ProblemTag(models.Model):
     class Meta:
         db_table = "problem_tag"
 
+    def __str__(self):
+        return self.name    
+
 
 class ProblemRuleType(Choices):
     ACM = "ACM"
@@ -72,7 +75,7 @@ class Problem(models.Model):
     rule_type = models.TextField()
     visible = models.BooleanField(default=True)
     difficulty = models.TextField()
-    tags = models.ManyToManyField(ProblemTag)
+    tags = models.ManyToManyField(ProblemTag, through='ProblemTagShip')
     source = models.TextField(null=True)
     # for OI mode
     total_score = models.IntegerField(default=0)
@@ -94,6 +97,9 @@ class Problem(models.Model):
     def add_ac_number(self):
         self.accepted_number = models.F("accepted_number") + 1
         self.save(update_fields=["accepted_number"])
+    
+    def __str__(self):
+        return self.title
 
 class ProblemTagShip(models.Model):
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
@@ -107,3 +113,5 @@ class ProblemTagShip(models.Model):
         self.tagged_number = models.F("tagged_number") + 1
         self.save(update_fields=["tagged_number"])
     
+    def __str__(self):
+        return 'proble:%s, tag:%s, tagged_number:%s' % (self.problem.title, self.tag.name, self.tagged_number)
