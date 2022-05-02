@@ -1,10 +1,11 @@
-import random
-from django.db.models import Q, Count
+import random, math
+from django.db.models import Q, Count, Max
 from utils.api import APIView
 from account.decorators import check_contest_permission
-from ..models import ProblemTag, Problem, ProblemRuleType
+from ..models import ProblemTag, Problem, ProblemRuleType, ProblemTagShip
 from ..serializers import ProblemSerializer, TagSerializer, ProblemSafeSerializer
 from contest.models import ContestRuleType
+import logging
 
 
 class ProblemTagAPI(APIView):
@@ -45,6 +46,32 @@ class ProblemAPI(APIView):
                 else:
                     problem["my_status"] = oi_problems_status.get(str(problem["id"]), {}).get("status")
 
+    # 按照标签智能推荐
+    @staticmethod
+    def _tag_based_sort(request, queryset_values):
+        tags = request.GET.get("tags")
+
+        # paginate data
+        results = queryset_values.get("results")
+        if results is not None:
+            problems = results
+        else:
+            problems = [queryset_values, ]
+        if tags:
+            tags = tags.split(',')
+            for problem in problems:
+                total_tagged_number = ProblemTagShip.objects.filter(problem__id=problem["id"]).aggregate(Max('tagged_number'))["tagged_number__max"]
+                score = 0
+                for item in tags:
+                    try:
+                        tagged_number = ProblemTagShip.objects.get(problem__id=problem["id"], tag__name=item).tagged_number
+                    except ProblemTagShip.DoesNotExist:
+                        tagged_number = 0
+                    score += tagged_number / (1 + math.log(1 + total_tagged_number))
+                problem["tag_score"] = score
+            problems.sort(key = lambda problem: problem["tag_score"], reverse = True)
+
+
     def get(self, request):
         # 问题详情页
         problem_id = request.GET.get("problem_id")
@@ -63,11 +90,7 @@ class ProblemAPI(APIView):
             return self.error("Limit is needed")
 
         problems = Problem.objects.select_related("created_by").filter(contest_id__isnull=True, visible=True)
-        # 按照标签筛选
-        tag_text = request.GET.get("tag")
-        if tag_text:
-            problems = problems.filter(tags__name=tag_text)
-
+            
         # 搜索的情况
         keyword = request.GET.get("keyword", "").strip()
         if keyword:
@@ -77,10 +100,42 @@ class ProblemAPI(APIView):
         difficulty = request.GET.get("difficulty")
         if difficulty:
             problems = problems.filter(difficulty=difficulty)
+        
         # 根据profile 为做过的题目添加标记
-        data = self.paginate_data(request, problems, ProblemSerializer)
+        data = self.paginate_data_spec(problems, ProblemSerializer)
+        self._tag_based_sort(request, data)
+        data = self.cutt_data(request, data)
         self._add_problem_status(request, data)
+        # results = data.get("results")
+        # if results is not None:
+        #     problems = results
+        # else:
+        #     problems = [data, ]
+        # for problem in problems:
+        #     logging.error(problem["tag_score"])
         return self.success(data)
+    
+    def add_tag(self, request):
+        data = request.data
+        problem_id = data.pop("id")
+
+        try:
+            problem = Problem.objects.get(id=problem_id)
+        except Problem.DoesNotExist:
+            return self.error("Problem does not exist")
+
+        tags = data.pop("tags")
+        data["languages"] = list(data["languages"])
+        
+        for tag in tags:
+            try:
+                tag = ProblemTag.objects.get(name=tag)
+            except ProblemTag.DoesNotExist:
+                tag = ProblemTag.objects.create(name=tag)
+            problem_tag_ship, _ = ProblemTagShip.objects.get_or_create(problem=problem,tag=tag)
+            problem_tag_ship.add_tagged_number()
+
+        return self.success()
 
 
 class ContestProblemAPI(APIView):

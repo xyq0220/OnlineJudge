@@ -139,6 +139,48 @@ class APIView(View):
                 "total": count}
         return data
 
+    def paginate_data_spec(self, query_set, object_serializer=None):
+        """
+        :param request: django的request
+        :param query_set: django model的query set或者其他list like objects
+        :param object_serializer: 用来序列化query set, 如果为None, 则直接对query set切片
+        :return:
+        """
+        results = query_set
+        if object_serializer:
+            count = query_set.count()
+            results = object_serializer(results, many=True).data
+        else:
+            count = query_set.count()
+        data = {"results": results,
+                "total": count}
+        return data
+    
+    def cutt_data(self, request, data):
+        """
+        :param request: django的request
+        :param query_set: django model的query set或者其他list like objects
+        :param object_serializer: 用来序列化query set, 如果为None, 则直接对query set切片
+        :return:
+        """
+        try:
+            limit = int(request.GET.get("limit", "10"))
+        except ValueError:
+            limit = 10
+        if limit < 0 or limit > 250:
+            limit = 10
+        try:
+            offset = int(request.GET.get("offset", "0"))
+        except ValueError:
+            offset = 0
+        if offset < 0:
+            offset = 0
+        results = data["results"][offset:offset + limit]
+
+        data = {"results": results,
+                "total": data["total"]}
+        return data
+
     def dispatch(self, request, *args, **kwargs):
         if self.request_parsers:
             try:
