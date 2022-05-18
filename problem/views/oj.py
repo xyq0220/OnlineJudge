@@ -1,5 +1,5 @@
 import random, math
-from django.db.models import Q, Count, Max
+from django.db.models import Q, Count, Max, Sum
 from utils.api import APIView
 from account.decorators import check_contest_permission
 from ..models import ProblemTag, Problem, ProblemRuleType, ProblemTagShip
@@ -67,7 +67,8 @@ class ProblemAPI(APIView):
                         tagged_number = ProblemTagShip.objects.get(problem__id=problem["id"], tag__name=item).tagged_number
                     except ProblemTagShip.DoesNotExist:
                         tagged_number = 0
-                    score += tagged_number / (1 + math.log(1 + total_tagged_number))
+                    tag_users = ProblemTagShip.objects.filter(tag__name=item).aggregate(Sum('tagged_number'))["tagged_number__sum"]
+                    score +=1 / (1 + math.log(1 + tag_users)) * tagged_number / (1 + math.log(1 + total_tagged_number))
                 problem["tag_score"] = score
             problems.sort(key = lambda problem: problem["tag_score"], reverse = True)
 
