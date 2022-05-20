@@ -1,0 +1,1 @@
+docker build -t xyq0220/onlinejudge:oj-backend .
