@@ -9,7 +9,7 @@ WORKDIR /app
 
 HEALTHCHECK --interval=5s --retries=3 CMD python3 /app/deploy/health_check.py
 
-RUN apk add --update --no-cache build-base nginx openssl curl unzip supervisor jpeg-dev zlib-dev postgresql-dev freetype-dev libxml2-dev libxslt-dev && \
+RUN apk add --update --no-cache build-base nginx openssl curl unzip supervisor jpeg-dev zlib-dev postgresql-dev freetype-dev && \
     pip install -i http://mirrors.cloud.aliyuncs.com/pypi/simple/ --trusted-host mirrors.cloud.aliyuncs.com --default-timeout=60 --no-cache-dir -r /app/deploy/requirements.txt && \
     apk del build-base --purge
 
