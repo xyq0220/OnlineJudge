@@ -116,17 +116,16 @@ class ProblemAPI(APIView):
         #     logging.error(problem["tag_score"])
         return self.success(data)
     
-    def add_tag(self, request):
+    def put(self, request):
         data = request.data
         problem_id = data.pop("id")
 
         try:
-            problem = Problem.objects.get(id=problem_id)
+            problem = Problem.objects.get(_id=problem_id)
         except Problem.DoesNotExist:
             return self.error("Problem does not exist")
 
         tags = data.pop("tags")
-        data["languages"] = list(data["languages"])
         
         for tag in tags:
             try:
