@@ -1,11 +1,11 @@
-import random, math
+import random
+import math
 from django.db.models import Q, Count, Max, Sum
 from utils.api import APIView
 from account.decorators import check_contest_permission
 from ..models import ProblemTag, Problem, ProblemRuleType, ProblemTagShip
 from ..serializers import ProblemSerializer, TagSerializer, ProblemSafeSerializer
 from contest.models import ContestRuleType
-import logging
 
 
 class ProblemTagAPI(APIView):
@@ -58,20 +58,19 @@ class ProblemAPI(APIView):
         else:
             problems = [queryset_values, ]
         if tags:
-            tags = tags.split(',')
+            tags = tags.split(",")
             for problem in problems:
-                total_tagged_number = ProblemTagShip.objects.filter(problem__id=problem["id"]).aggregate(Max('tagged_number'))["tagged_number__max"]
+                total_tagged_number = ProblemTagShip.objects.filter(problem__id=problem["id"]).aggregate(Max("tagged_number"))["tagged_number__max"]
                 score = 0
                 for item in tags:
                     try:
                         tagged_number = ProblemTagShip.objects.get(problem__id=problem["id"], tag__name=item).tagged_number
                     except ProblemTagShip.DoesNotExist:
                         tagged_number = 0
-                    tag_users = ProblemTagShip.objects.filter(tag__name=item).aggregate(Sum('tagged_number'))["tagged_number__sum"]
-                    score +=1 / (1 + math.log(1 + tag_users)) * tagged_number / (1 + math.log(1 + total_tagged_number))
+                    tag_users = ProblemTagShip.objects.filter(tag__name=item).aggregate(Sum("tagged_number"))["tagged_number__sum"]
+                    score += 1 / (1 + math.log(1 + tag_users)) * tagged_number / (1 + math.log(1 + total_tagged_number))
                 problem["tag_score"] = score
-            problems.sort(key = lambda problem: problem["tag_score"], reverse = True)
-
+            problems.sort(key=lambda problem: problem["tag_score"], reverse=True)
 
     def get(self, request):
         # 问题详情页
@@ -91,7 +90,7 @@ class ProblemAPI(APIView):
             return self.error("Limit is needed")
 
         problems = Problem.objects.select_related("created_by").filter(contest_id__isnull=True, visible=True)
-            
+
         # 搜索的情况
         keyword = request.GET.get("keyword", "").strip()
         if keyword:
@@ -101,7 +100,7 @@ class ProblemAPI(APIView):
         difficulty = request.GET.get("difficulty")
         if difficulty:
             problems = problems.filter(difficulty=difficulty)
-        
+
         # 根据profile 为做过的题目添加标记
         data = self.paginate_data_spec(problems, ProblemSerializer)
         self._tag_based_sort(request, data)
@@ -115,7 +114,7 @@ class ProblemAPI(APIView):
         # for problem in problems:
         #     logging.error(problem["tag_score"])
         return self.success(data)
-    
+
     def put(self, request):
         data = request.data
         problem_id = data.pop("id")
@@ -126,13 +125,13 @@ class ProblemAPI(APIView):
             return self.error("Problem does not exist")
 
         tags = data.pop("tags")
-        
+
         for tag in tags:
             try:
                 tag = ProblemTag.objects.get(name=tag)
             except ProblemTag.DoesNotExist:
                 tag = ProblemTag.objects.create(name=tag)
-            problem_tag_ship, _ = ProblemTagShip.objects.get_or_create(problem=problem,tag=tag)
+            problem_tag_ship, _ = ProblemTagShip.objects.get_or_create(problem=problem, tag=tag)
             problem_tag_ship.add_tagged_number()
 
         return self.success()

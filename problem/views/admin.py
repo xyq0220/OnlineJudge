@@ -221,7 +221,7 @@ class ProblemAPI(ProblemBase):
                 tag = ProblemTag.objects.get(name=item)
             except ProblemTag.DoesNotExist:
                 tag = ProblemTag.objects.create(name=item)
-            problem_tag_ship, _ = ProblemTagShip.objects.get_or_create(problem=problem,tag=tag)
+            problem_tag_ship, _ = ProblemTagShip.objects.get_or_create(problem=problem, tag=tag)
             problem_tag_ship.add_tagged_number()
         return self.success(ProblemAdminSerializer(problem).data)
 
@@ -287,7 +287,7 @@ class ProblemAPI(ProblemBase):
                 tag = ProblemTag.objects.get(name=tag)
             except ProblemTag.DoesNotExist:
                 tag = ProblemTag.objects.create(name=tag)
-            problem_tag_ship, _ = ProblemTagShip.objects.get_or_create(problem=problem,tag=tag)
+            problem_tag_ship, _ = ProblemTagShip.objects.get_or_create(problem=problem, tag=tag)
             problem_tag_ship.add_tagged_number()
 
         return self.success()
@@ -344,7 +344,7 @@ class ContestProblemAPI(ProblemBase):
                 tag = ProblemTag.objects.get(name=item)
             except ProblemTag.DoesNotExist:
                 tag = ProblemTag.objects.create(name=item)
-            problem_tag_ship, _ = ProblemTagShip.objects.get_or_create(problem=problem,tag=tag)
+            problem_tag_ship, _ = ProblemTagShip.objects.get_or_create(problem=problem, tag=tag)
             problem_tag_ship.add_tagged_number()
         return self.success(ProblemAdminSerializer(problem).data)
 
@@ -419,7 +419,7 @@ class ContestProblemAPI(ProblemBase):
                 tag = ProblemTag.objects.get(name=tag)
             except ProblemTag.DoesNotExist:
                 tag = ProblemTag.objects.create(name=tag)
-            problem_tag_ship, _ = ProblemTagShip.objects.get_or_create(problem=problem,tag=tag)
+            problem_tag_ship, _ = ProblemTagShip.objects.get_or_create(problem=problem, tag=tag)
             problem_tag_ship.add_tagged_number()
         return self.success()
 
@@ -625,8 +625,8 @@ class ImportProblemAPI(CSRFExemptAPIView, TestCaseZipProcessor):
                                                              )
                         for tag_name in problem_info["tags"]:
                             tag_obj, _ = ProblemTag.objects.get_or_create(name=tag_name)
-                            problem_tag_ship, _ = ProblemTagShip.objects.get_or_create(problem=problem_obj,tag=tag_obj)
-                            problem_tag_ship.add_tagged_number()                      
+                            problem_tag_ship, _ = ProblemTagShip.objects.get_or_create(problem=problem_obj, tag=tag_obj)
+                            problem_tag_ship.add_tagged_number()
         return self.success({"import_count": count})
 
 

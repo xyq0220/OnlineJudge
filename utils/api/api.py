@@ -155,7 +155,7 @@ class APIView(View):
         data = {"results": results,
                 "total": count}
         return data
-    
+
     def cutt_data(self, request, data):
         """
         :param request: django的request
